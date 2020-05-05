@@ -11,7 +11,7 @@ local receive = function(self)
   end
   local first_opcode
   local frames
-  local bytes = 3
+  local bytes = 2
   local encoded = ''
   local clean = function(was_clean,code,reason)
     self.state = 'CLOSED'
@@ -51,13 +51,18 @@ local receive = function(self)
       if not first_opcode then
         first_opcode = opcode
       end
-      if not fin then
+
+      if fin and  opcode == frame.PING and not self.is_server then
+          -- listen for PING opcode and reply with PONG
+          local encoded = frame.encode(decoded, frame.PONG ,not self.is_server)
+          local n,err = self:sock_send(encoded)
+      elseif not fin then
         if not frames then
           frames = {}
         elseif opcode ~= frame.CONTINUATION then
           return clean(false,1002,'protocol error')
         end
-        bytes = 3
+        bytes = 2
         encoded = ''
         tinsert(frames,decoded)
       elseif not frames then
