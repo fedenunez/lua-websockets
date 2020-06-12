@@ -56,6 +56,7 @@ local receive = function(self)
           -- listen for PING opcode and reply with PONG
           local encoded = frame.encode(decoded, frame.PONG ,not self.is_server)
           local n,err = self:sock_send(encoded)
+          return decoded,opcode
       elseif not fin then
         if not frames then
           frames = {}
