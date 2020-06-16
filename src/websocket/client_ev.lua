@@ -142,7 +142,8 @@ local ev = function(ws)
           port = port,
           protocols = ws_protocols_tbl,
           origin = ws.origin,
-          uri = uri
+          uri = uri,
+          extra_headers = ws.extra_headers
         }
         async_send(
           req,

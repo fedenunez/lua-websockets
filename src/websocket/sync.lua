@@ -152,8 +152,11 @@ local connect = function(self,ws_url,ws_protocol,ssl_params)
     host = host,
     port = port,
     protocols = ws_protocols_tbl,
-    uri = uri
+    uri = uri,
+    extra_headers = ws.extra_headers
   }
+
+
   local n,err = self:sock_send(req)
   if n ~= #req then
     return nil,err,nil

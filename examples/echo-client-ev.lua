@@ -3,7 +3,7 @@
 -- to stdout
 
 local ev = require'ev'
-local ws_client = require('websocket.client').ev()
+local ws_client = require('websocket.client').ev({extra_headers = { ["MY_OWN_HEADER"] = "THE VALUE"}})
 
 ws_client:on_open(function()
     print('connected')
