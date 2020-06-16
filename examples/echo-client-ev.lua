@@ -3,13 +3,16 @@
 -- to stdout
 
 local ev = require'ev'
-local ws_client = require('websocket.client').ev({extra_headers = { ["MY_OWN_HEADER"] = "THE VALUE"}})
+local ws_client = require('websocket.client').ev()
 
 ws_client:on_open(function()
     print('connected')
   end)
 
-ws_client:connect('ws://echo.websocket.org','echo')
+local options = {
+  extra_http_headers = { ["MY_OWN_HEADER"] = "THE VALUE"}
+}
+ws_client:connect('ws://echo.websocket.org','echo', options)
 
 ws_client:on_message(function(ws, msg)
     print('received',msg)

@@ -123,7 +123,11 @@ local close = function(self,code,reason)
   return was_clean,code,reason or ''
 end
 
-local connect = function(self,ws_url,ws_protocol,ssl_params)
+local connect = function(self,ws_url,ws_protocol,options)
+
+  local ssl_params         = options and options['ssl_params'] or nil
+  local extra_http_headers = options and options['extra_http_headers'] or nil
+
   if self.state ~= 'CLOSED' then
     return nil,'wrong state',nil
   end
@@ -153,7 +157,7 @@ local connect = function(self,ws_url,ws_protocol,ssl_params)
     port = port,
     protocols = ws_protocols_tbl,
     uri = uri,
-    extra_headers = ws.extra_headers
+    extra_headers = extra_http_headers
   }
 
 

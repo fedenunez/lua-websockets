@@ -92,9 +92,9 @@ local ev = function(ws)
         local encoded = frame.encode_close(code)
         encoded = frame.encode(encoded,frame.CLOSE,true)
         async_send(encoded,
-          function()
-            on_close(true,code or 1005,reason)
-          end,handle_socket_err)
+        function()
+          on_close(true,code or 1005,reason)
+        end,handle_socket_err)
       else
         on_close(true,1005,'')
       end
@@ -106,7 +106,9 @@ local ev = function(ws)
     async_send(encoded, nil, handle_socket_err)
   end
 
-  self.connect = function(_,url,ws_protocol)
+  self.connect = function(_,url,ws_protocol, options)
+    local extra_http_headers = options and options['extra_http_headers'] or nil
+
     if self.state ~= 'CLOSED' then
       on_error('wrong state',true)
       return
@@ -118,9 +120,9 @@ local ev = function(ws)
     end
     local ws_protocols_tbl = {''}
     if type(ws_protocol) == 'string' then
-        ws_protocols_tbl = {ws_protocol}
+      ws_protocols_tbl = {ws_protocol}
     elseif type(ws_protocol) == 'table' then
-        ws_protocols_tbl = ws_protocol
+      ws_protocols_tbl = ws_protocol
     end
     self.state = 'CONNECTING'
     assert(not sock)
@@ -132,65 +134,65 @@ local ev = function(ws)
     sock:setoption('tcp-nodelay',true)
     async_send,send_io_stop = require'websocket.ev_common'.async_send(sock,loop)
     handshake_io = ev.IO.new(
-      function(loop,connect_io)
-        connect_io:stop(loop)
-        local key = tools.generate_key()
-        local req = handshake.upgrade_request
-        {
-          key = key,
-          host = host,
-          port = port,
-          protocols = ws_protocols_tbl,
-          origin = ws.origin,
-          uri = uri,
-          extra_headers = ws.extra_headers
-        }
-        async_send(
-          req,
-          function()
-            local resp = {}
-            local response = ''
-            local read_upgrade = function(loop,read_io)
-              -- this seems to be possible, i don't understand why though :(
-              if not sock then
-                read_io:stop(loop)
-                handshake_io = nil
+    function(loop,connect_io)
+      connect_io:stop(loop)
+      local key = tools.generate_key()
+      local req = handshake.upgrade_request
+      {
+        key = key,
+        host = host,
+        port = port,
+        protocols = ws_protocols_tbl,
+        origin = ws.origin,
+        uri = uri,
+        extra_headers = extra_http_headers
+      }
+      async_send(
+      req,
+      function()
+        local resp = {}
+        local response = ''
+        local read_upgrade = function(loop,read_io)
+          -- this seems to be possible, i don't understand why though :(
+          if not sock then
+            read_io:stop(loop)
+            handshake_io = nil
+            return
+          end
+          repeat
+            local byte,err,pp = sock:receive(1)
+            if byte then
+              response = response..byte
+            elseif err then
+              if err == 'timeout' then
                 return
-              end
-              repeat
-                local byte,err,pp = sock:receive(1)
-                if byte then
-                  response = response..byte
-                elseif err then
-                  if err == 'timeout' then
-                    return
-                  else
-                    read_io:stop(loop)
-                    on_error('accept failed')
-                    return
-                  end
-                end
-              until response:sub(#response-3) == '\r\n\r\n'
-              read_io:stop(loop)
-              handshake_io = nil
-              local headers = handshake.http_headers(response)
-              local expected_accept = handshake.sec_websocket_accept(key)
-              if headers['sec-websocket-accept'] ~= expected_accept then
-                self.state = 'CLOSED'
+              else
+                read_io:stop(loop)
                 on_error('accept failed')
                 return
               end
-              message_io = require'websocket.ev_common'.message_io(
-                sock,loop,
-                on_message,
-              handle_socket_err)
-              on_open(self, headers)
             end
-            handshake_io = ev.IO.new(read_upgrade,fd,ev.READ)
-            handshake_io:start(loop)-- handshake
-          end,
-        handle_socket_err)
-      end,fd,ev.WRITE)
+          until response:sub(#response-3) == '\r\n\r\n'
+          read_io:stop(loop)
+          handshake_io = nil
+          local headers = handshake.http_headers(response)
+          local expected_accept = handshake.sec_websocket_accept(key)
+          if headers['sec-websocket-accept'] ~= expected_accept then
+            self.state = 'CLOSED'
+            on_error('accept failed')
+            return
+          end
+          message_io = require'websocket.ev_common'.message_io(
+          sock,loop,
+          on_message,
+          handle_socket_err)
+          on_open(self, headers)
+        end
+        handshake_io = ev.IO.new(read_upgrade,fd,ev.READ)
+        handshake_io:start(loop)-- handshake
+      end,
+      handle_socket_err)
+    end,fd,ev.WRITE)
     local connected,err = sock:connect(host,port)
     if connected then
       handshake_io:callback()(loop,handshake_io)
@@ -236,9 +238,9 @@ local ev = function(ws)
       -- by 'echoing' the message.
       async_send(encoded)
       close_timer = ev.Timer.new(function()
-          close_timer = nil
-          on_close(false,1006,'timeout')
-        end,timeout)
+        close_timer = nil
+        on_close(false,1006,'timeout')
+      end,timeout)
       close_timer:start(loop)
     end
   end

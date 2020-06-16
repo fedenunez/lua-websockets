@@ -51,7 +51,7 @@ local upgrade_request = function(req)
     'Sec-WebSocket-Version: 13',
   }
   if req.extra_headers then
-    for k,v in req.extra_headers do
+    for k,v in pairs(req.extra_headers) do
       tinsert(lines, string.format('%s: %s',k,v))
     end
   end
