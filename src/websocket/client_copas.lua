@@ -29,8 +29,12 @@ local new = function(ws)
   end
   
   self.sock_close = function(self)
-    self.sock:shutdown()
+    -- self.sock:shutdown()
     self.sock:close()
+  end
+
+  self.dohandshake = function(self,...)
+    return copas.dohandshake(self.sock, ...)
   end
   
   self = sync.extend(self)

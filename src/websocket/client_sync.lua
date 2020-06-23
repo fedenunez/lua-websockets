@@ -1,6 +1,7 @@
 local socket = require'socket'
 local sync = require'websocket.sync'
 local tools = require'websocket.tools'
+local ssl = require'ssl'
 
 local new = function(ws)
   ws =  ws or {}
@@ -29,6 +30,12 @@ local new = function(ws)
   self.sock_close = function(self)
     --self.sock:shutdown() Causes errors?
     self.sock:close()
+  end
+
+  self.dohandshake = function(self,ssl_params)
+    self.sock = ssl.wrap(self.sock, ssl_params)
+    self.sock:dohandshake()
+    return self.sock
   end
   
   self = sync.extend(self)

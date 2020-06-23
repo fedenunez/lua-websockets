@@ -138,8 +138,7 @@ local connect = function(self,ws_url,ws_protocol,options)
     return nil,err,nil
   end
   if protocol == 'wss' then
-    self.sock = ssl.wrap(self.sock, ssl_params)
-    self.sock:dohandshake()
+    self.sock = self:dohandshake(ssl_params)
   elseif protocol ~= "ws" then
     return nil, 'bad protocol'
   end
