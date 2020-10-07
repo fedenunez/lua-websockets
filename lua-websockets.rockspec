@@ -14,9 +14,9 @@ description = {
 }
 
 dependencies = {
-  "lua >= 5.1",
+  "lua >= 5.3",
   "luasocket",
-  "luabitop",
+--  "luabitop", < this is not required for lua5.3
   "copas",
   "luasec"
 }
